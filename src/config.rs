@@ -279,6 +279,8 @@ pub struct ConfigSearch {
     pub nonnumeric_search: ConfigSearchKind,
     #[serde(default = "default_search_logic_and")]
     pub logic: ConfigSearchLogic,
+    #[serde(default = "default_true")]
+    pub smart_case: bool,
 }
 
 impl Default for ConfigSearch {
@@ -287,6 +289,7 @@ impl Default for ConfigSearch {
             numeric_search: ConfigSearchKind::Exact,
             nonnumeric_search: ConfigSearchKind::Partial,
             logic: ConfigSearchLogic::And,
+            smart_case: true,
         }
     }
 }

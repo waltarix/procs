@@ -442,7 +442,7 @@ impl View {
                     "{} {}",
                     row,
                     apply_color(
-                        c.column.display_header(&c.align, order, config),
+                        &c.column.display_header(&c.align, order, config),
                         &config.style.header,
                         theme,
                         false
@@ -464,7 +464,7 @@ impl View {
                     "{} {}",
                     row,
                     apply_color(
-                        c.column.display_unit(&c.align),
+                        &c.column.display_unit(&c.align),
                         &config.style.unit,
                         theme,
                         false
@@ -492,7 +492,7 @@ impl View {
                     "{} {}",
                     row,
                     apply_style(
-                        c.column.display_content(pid, &c.align).unwrap(),
+                        &c.column.display_content(pid, &c.align).unwrap(),
                         &c.style,
                         &config.style,
                         theme,

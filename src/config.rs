@@ -1,7 +1,13 @@
 use crate::column::Column;
 use crate::columns::ConfigColumnKind;
+use lazy_static::lazy_static;
+use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use std::str::FromStr;
+
+lazy_static! {
+    static ref RGB_PATTERN: Regex = Regex::new(r"(?i)\A#[0-9A-F]{6}\z").unwrap();
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Functions for serde defalut
@@ -138,6 +144,7 @@ pub enum ConfigColor {
     Cyan,
     White,
     Color256(u8),
+    RGB(String),
 }
 
 fn serialize_color(c: &ConfigColor) -> String {
@@ -159,6 +166,7 @@ fn serialize_color(c: &ConfigColor) -> String {
         ConfigColor::Cyan => "Cyan".to_string(),
         ConfigColor::White => "White".to_string(),
         ConfigColor::Color256(x) => format!("{}", x),
+        ConfigColor::RGB(x) => x.to_string(),
     }
 }
 
@@ -181,6 +189,7 @@ fn deserialize_color(s: &str) -> Option<ConfigColor> {
         "Cyan" => Some(ConfigColor::Cyan),
         "White" => Some(ConfigColor::White),
         s if u8::from_str(s).is_ok() => Some(ConfigColor::Color256(u8::from_str(s).unwrap())),
+        s if RGB_PATTERN.is_match(s) => Some(ConfigColor::RGB(s.to_string())),
         _ => None,
     }
 }
@@ -472,6 +481,8 @@ pub struct ConfigSearch {
     pub nonnumeric_search: ConfigSearchKind,
     #[serde(default = "default_search_logic_and")]
     pub logic: ConfigSearchLogic,
+    #[serde(default = "default_true")]
+    pub smart_case: bool,
 }
 
 impl Default for ConfigSearch {
@@ -480,6 +491,7 @@ impl Default for ConfigSearch {
             numeric_search: ConfigSearchKind::Exact,
             nonnumeric_search: ConfigSearchKind::Partial,
             logic: ConfigSearchLogic::And,
+            smart_case: true,
         }
     }
 }

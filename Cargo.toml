@@ -37,8 +37,8 @@ codecov   = { repository = "dalance/procs", branch = "master", service = "github
 anyhow        = "1.0"
 atty          = "0.2.14"
 byte-unit     = "4"
-clap          = {version = "3.2.23", features = ["derive"]}
-clap_complete = "3.2.5"
+clap          = {version = "4", features = ["derive"]}
+clap_complete = "4"
 console       = "0.15.5"
 chrono        = {version = "0.4.23", default-features = false, features = ["clock"]}
 directories   = "4.0.1"
@@ -52,6 +52,8 @@ serde_derive  = "1.0"
 termbg        = "0.4.3"
 toml          = "0.7"
 unicode-width = "0.1"
+ansi_term     = "0.12.1"
+regex         = "1.6.0"
 
 [target.'cfg(any(target_os = "linux", target_os = "android"))'.dependencies]
 pager         = "0.16.1"
@@ -78,5 +80,10 @@ target = "x86_64-unknown-linux-musl"
 procs = { path = "/usr/bin/procs" }
 
 [profile.release]
+strip = true
+opt-level = 3
 lto = true
 codegen-units = 1
+
+[patch.crates-io]
+unicode-width = { git = "https://github.com/waltarix/unicode-width", tag = "v0.1.10-custom-r2" }

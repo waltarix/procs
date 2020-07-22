@@ -137,6 +137,7 @@ fn get_arg_max() -> size_t {
     arg_max as size_t
 }
 
+#[allow(dead_code)]
 pub struct PathInfo {
     #[allow(dead_code)]
     pub name: String,

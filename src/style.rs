@@ -1,67 +1,71 @@
 use crate::config::{ConfigColor, ConfigColorByTheme, ConfigColumnStyle, ConfigStyle, ConfigTheme};
-use console::{Style, StyledObject};
+use ansi_term::{
+    ANSIString,
+    Color::{self, Fixed},
+    Style,
+};
 use once_cell::sync::Lazy;
 
-static BRIGHT_BLACK: Lazy<Style> = Lazy::new(|| Style::new().black().bright());
-static BRIGHT_RED: Lazy<Style> = Lazy::new(|| Style::new().red().bright());
-static BRIGHT_GREEN: Lazy<Style> = Lazy::new(|| Style::new().green().bright());
-static BRIGHT_YELLOW: Lazy<Style> = Lazy::new(|| Style::new().yellow().bright());
-static BRIGHT_BLUE: Lazy<Style> = Lazy::new(|| Style::new().blue().bright());
-static BRIGHT_MAGENTA: Lazy<Style> = Lazy::new(|| Style::new().magenta().bright());
-static BRIGHT_CYAN: Lazy<Style> = Lazy::new(|| Style::new().cyan().bright());
-static BRIGHT_WHITE: Lazy<Style> = Lazy::new(|| Style::new().white().bright());
-static BLACK: Lazy<Style> = Lazy::new(|| Style::new().black());
-static RED: Lazy<Style> = Lazy::new(|| Style::new().red());
-static GREEN: Lazy<Style> = Lazy::new(|| Style::new().green());
-static YELLOW: Lazy<Style> = Lazy::new(|| Style::new().yellow());
-static BLUE: Lazy<Style> = Lazy::new(|| Style::new().blue());
-static MAGENTA: Lazy<Style> = Lazy::new(|| Style::new().magenta());
-static CYAN: Lazy<Style> = Lazy::new(|| Style::new().cyan());
-static WHITE: Lazy<Style> = Lazy::new(|| Style::new().white());
+static BRIGHT_BLACK: Lazy<Style> = Lazy::new(|| Fixed(8).normal());
+static BRIGHT_RED: Lazy<Style> = Lazy::new(|| Fixed(9).normal());
+static BRIGHT_GREEN: Lazy<Style> = Lazy::new(|| Fixed(10).normal());
+static BRIGHT_YELLOW: Lazy<Style> = Lazy::new(|| Fixed(11).normal());
+static BRIGHT_BLUE: Lazy<Style> = Lazy::new(|| Fixed(12).normal());
+static BRIGHT_MAGENTA: Lazy<Style> = Lazy::new(|| Fixed(13).normal());
+static BRIGHT_CYAN: Lazy<Style> = Lazy::new(|| Fixed(14).normal());
+static BRIGHT_WHITE: Lazy<Style> = Lazy::new(|| Fixed(15).normal());
+static BLACK: Lazy<Style> = Lazy::new(|| Fixed(0).normal());
+static RED: Lazy<Style> = Lazy::new(|| Fixed(1).normal());
+static GREEN: Lazy<Style> = Lazy::new(|| Fixed(2).normal());
+static YELLOW: Lazy<Style> = Lazy::new(|| Fixed(3).normal());
+static BLUE: Lazy<Style> = Lazy::new(|| Fixed(4).normal());
+static MAGENTA: Lazy<Style> = Lazy::new(|| Fixed(5).normal());
+static CYAN: Lazy<Style> = Lazy::new(|| Fixed(6).normal());
+static WHITE: Lazy<Style> = Lazy::new(|| Fixed(7).normal());
 
-fn apply_style_by_state(
-    x: String,
+fn apply_style_by_state<'a>(
+    x: &'a String,
     s: &ConfigStyle,
     theme: &ConfigTheme,
     faded: bool,
-) -> StyledObject<String> {
+) -> ANSIString<'a> {
     match x {
-        x if x.contains('D') => apply_color(x.to_string(), &s.by_state.color_d, theme, faded),
-        x if x.contains('R') => apply_color(x.to_string(), &s.by_state.color_r, theme, faded),
-        x if x.contains('S') => apply_color(x.to_string(), &s.by_state.color_s, theme, faded),
-        x if x.contains('T') => apply_color(x.to_string(), &s.by_state.color_t, theme, faded),
-        x if x.contains('t') => apply_color(x.to_string(), &s.by_state.color_t, theme, faded),
-        x if x.contains('Z') => apply_color(x.to_string(), &s.by_state.color_z, theme, faded),
-        x if x.contains('X') => apply_color(x.to_string(), &s.by_state.color_x, theme, faded),
-        x if x.contains('K') => apply_color(x.to_string(), &s.by_state.color_k, theme, faded),
-        x if x.contains('W') => apply_color(x.to_string(), &s.by_state.color_w, theme, faded),
-        x if x.contains('P') => apply_color(x.to_string(), &s.by_state.color_p, theme, faded),
+        x if x.contains('D') => apply_color(x, &s.by_state.color_d, theme, faded),
+        x if x.contains('R') => apply_color(x, &s.by_state.color_r, theme, faded),
+        x if x.contains('S') => apply_color(x, &s.by_state.color_s, theme, faded),
+        x if x.contains('T') => apply_color(x, &s.by_state.color_t, theme, faded),
+        x if x.contains('t') => apply_color(x, &s.by_state.color_t, theme, faded),
+        x if x.contains('Z') => apply_color(x, &s.by_state.color_z, theme, faded),
+        x if x.contains('X') => apply_color(x, &s.by_state.color_x, theme, faded),
+        x if x.contains('K') => apply_color(x, &s.by_state.color_k, theme, faded),
+        x if x.contains('W') => apply_color(x, &s.by_state.color_w, theme, faded),
+        x if x.contains('P') => apply_color(x, &s.by_state.color_p, theme, faded),
         _ => apply_color(x, &s.by_state.color_x, theme, faded),
     }
 }
 
-fn apply_style_by_unit(
-    x: String,
+fn apply_style_by_unit<'a>(
+    x: &'a String,
     s: &ConfigStyle,
     theme: &ConfigTheme,
     faded: bool,
-) -> StyledObject<String> {
+) -> ANSIString<'a> {
     match x {
-        x if x.contains('K') => apply_color(x.to_string(), &s.by_unit.color_k, theme, faded),
-        x if x.contains('M') => apply_color(x.to_string(), &s.by_unit.color_m, theme, faded),
-        x if x.contains('G') => apply_color(x.to_string(), &s.by_unit.color_g, theme, faded),
-        x if x.contains('T') => apply_color(x.to_string(), &s.by_unit.color_t, theme, faded),
-        x if x.contains('P') => apply_color(x.to_string(), &s.by_unit.color_p, theme, faded),
+        x if x.contains('K') => apply_color(x, &s.by_unit.color_k, theme, faded),
+        x if x.contains('M') => apply_color(x, &s.by_unit.color_m, theme, faded),
+        x if x.contains('G') => apply_color(x, &s.by_unit.color_g, theme, faded),
+        x if x.contains('T') => apply_color(x, &s.by_unit.color_t, theme, faded),
+        x if x.contains('P') => apply_color(x, &s.by_unit.color_p, theme, faded),
         _ => apply_color(x, &s.by_unit.color_x, theme, faded),
     }
 }
 
-fn apply_style_by_percentage(
-    x: String,
+fn apply_style_by_percentage<'a>(
+    x: &'a String,
     s: &ConfigStyle,
     theme: &ConfigTheme,
     faded: bool,
-) -> StyledObject<String> {
+) -> ANSIString<'a> {
     let value: f64 = x.trim().parse().unwrap_or(0.0);
     if value > 100.0 {
         apply_color(x, &s.by_percentage.color_100, theme, faded)
@@ -76,12 +80,23 @@ fn apply_style_by_percentage(
     }
 }
 
-pub fn apply_color(
-    x: String,
+fn hexcode2color(hexcode: &str) -> Style {
+    let color: i32 = i32::from_str_radix(hexcode.get(1..7).unwrap_or("0"), 16).unwrap_or(0);
+
+    Color::RGB(
+        ((color >> 16) & 0xff) as u8,
+        ((color >> 8) & 0xff) as u8,
+        (color & 0xff) as u8,
+    )
+    .normal()
+}
+
+pub fn apply_color<'a>(
+    x: &'a String,
     c: &ConfigColorByTheme,
     theme: &ConfigTheme,
     faded: bool,
-) -> StyledObject<String> {
+) -> ANSIString<'a> {
     let c = match theme {
         ConfigTheme::Dark => &c.dark,
         ConfigTheme::Light => &c.light,
@@ -90,54 +105,56 @@ pub fn apply_color(
 
     if faded {
         match c {
-            ConfigColor::BrightBlack => BLACK.apply_to(x),
-            ConfigColor::BrightRed => RED.apply_to(x),
-            ConfigColor::BrightGreen => GREEN.apply_to(x),
-            ConfigColor::BrightYellow => YELLOW.apply_to(x),
-            ConfigColor::BrightBlue => BLUE.apply_to(x),
-            ConfigColor::BrightMagenta => MAGENTA.apply_to(x),
-            ConfigColor::BrightCyan => CYAN.apply_to(x),
-            ConfigColor::BrightWhite => WHITE.apply_to(x),
-            ConfigColor::Black => BLACK.apply_to(x),
-            ConfigColor::Red => RED.apply_to(x),
-            ConfigColor::Green => GREEN.apply_to(x),
-            ConfigColor::Yellow => YELLOW.apply_to(x),
-            ConfigColor::Blue => BLUE.apply_to(x),
-            ConfigColor::Magenta => MAGENTA.apply_to(x),
-            ConfigColor::Cyan => CYAN.apply_to(x),
-            ConfigColor::White => WHITE.apply_to(x),
-            ConfigColor::Color256(c) => Style::new().color256(*c).apply_to(x),
+            ConfigColor::BrightBlack => BRIGHT_BLACK.paint(x),
+            ConfigColor::BrightRed => RED.paint(x),
+            ConfigColor::BrightGreen => GREEN.paint(x),
+            ConfigColor::BrightYellow => YELLOW.paint(x),
+            ConfigColor::BrightBlue => BLUE.paint(x),
+            ConfigColor::BrightMagenta => MAGENTA.paint(x),
+            ConfigColor::BrightCyan => CYAN.paint(x),
+            ConfigColor::BrightWhite => WHITE.paint(x),
+            ConfigColor::Black => BLACK.paint(x),
+            ConfigColor::Red => RED.paint(x),
+            ConfigColor::Green => GREEN.paint(x),
+            ConfigColor::Yellow => YELLOW.paint(x),
+            ConfigColor::Blue => BLUE.paint(x),
+            ConfigColor::Magenta => MAGENTA.paint(x),
+            ConfigColor::Cyan => CYAN.paint(x),
+            ConfigColor::White => WHITE.paint(x),
+            ConfigColor::Color256(c) => Fixed(*c).paint(x),
+            ConfigColor::Rgb(c) => hexcode2color(c).paint(x),
         }
     } else {
         match c {
-            ConfigColor::BrightBlack => BRIGHT_BLACK.apply_to(x),
-            ConfigColor::BrightRed => BRIGHT_RED.apply_to(x),
-            ConfigColor::BrightGreen => BRIGHT_GREEN.apply_to(x),
-            ConfigColor::BrightYellow => BRIGHT_YELLOW.apply_to(x),
-            ConfigColor::BrightBlue => BRIGHT_BLUE.apply_to(x),
-            ConfigColor::BrightMagenta => BRIGHT_MAGENTA.apply_to(x),
-            ConfigColor::BrightCyan => BRIGHT_CYAN.apply_to(x),
-            ConfigColor::BrightWhite => BRIGHT_WHITE.apply_to(x),
-            ConfigColor::Black => BLACK.apply_to(x),
-            ConfigColor::Red => RED.apply_to(x),
-            ConfigColor::Green => GREEN.apply_to(x),
-            ConfigColor::Yellow => YELLOW.apply_to(x),
-            ConfigColor::Blue => BLUE.apply_to(x),
-            ConfigColor::Magenta => MAGENTA.apply_to(x),
-            ConfigColor::Cyan => CYAN.apply_to(x),
-            ConfigColor::White => WHITE.apply_to(x),
-            ConfigColor::Color256(c) => Style::new().color256(*c).apply_to(x),
+            ConfigColor::BrightBlack => BRIGHT_BLACK.paint(x),
+            ConfigColor::BrightRed => BRIGHT_RED.paint(x),
+            ConfigColor::BrightGreen => BRIGHT_GREEN.paint(x),
+            ConfigColor::BrightYellow => BRIGHT_YELLOW.paint(x),
+            ConfigColor::BrightBlue => BRIGHT_BLUE.paint(x),
+            ConfigColor::BrightMagenta => BRIGHT_MAGENTA.paint(x),
+            ConfigColor::BrightCyan => BRIGHT_CYAN.paint(x),
+            ConfigColor::BrightWhite => BRIGHT_WHITE.paint(x),
+            ConfigColor::Black => BLACK.paint(x),
+            ConfigColor::Red => RED.paint(x),
+            ConfigColor::Green => GREEN.paint(x),
+            ConfigColor::Yellow => YELLOW.paint(x),
+            ConfigColor::Blue => BLUE.paint(x),
+            ConfigColor::Magenta => MAGENTA.paint(x),
+            ConfigColor::Cyan => CYAN.paint(x),
+            ConfigColor::White => WHITE.paint(x),
+            ConfigColor::Color256(c) => Fixed(*c).paint(x),
+            ConfigColor::Rgb(c) => hexcode2color(c).paint(x),
         }
     }
 }
 
-pub fn apply_style(
-    x: String,
+pub fn apply_style<'a>(
+    x: &'a String,
     cs: &ConfigColumnStyle,
     s: &ConfigStyle,
     theme: &ConfigTheme,
     faded: bool,
-) -> StyledObject<String> {
+) -> ANSIString<'a> {
     match cs {
         ConfigColumnStyle::Fixed(c) => apply_color(x, c, theme, faded),
         ConfigColumnStyle::ByPercentage => apply_style_by_percentage(x, s, theme, faded),
@@ -148,4 +165,20 @@ pub fn apply_style(
 
 pub fn color_to_column_style(c: &ConfigColorByTheme) -> ConfigColumnStyle {
     ConfigColumnStyle::Fixed(c.clone())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_hexcode2color() {
+        let hexcode = "#aabbcc";
+        let rgb = hexcode2color(hexcode);
+        assert!(rgb.eq(&Color::RGB(170, 187, 204).normal()));
+
+        let hexcode = "#invalid";
+        let rgb = hexcode2color(hexcode);
+        assert!(rgb.eq(&Color::RGB(0, 0, 0).normal()));
+    }
 }

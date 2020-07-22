@@ -1,7 +1,11 @@
 use crate::column::Column;
 use crate::columns::ConfigColumnKind;
+use once_cell::sync::Lazy;
+use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use std::str::FromStr;
+
+static RGB_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)\A#[0-9A-F]{6}\z").unwrap());
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Functions for serde defalut
@@ -147,6 +151,7 @@ pub enum ConfigColor {
     Cyan,
     White,
     Color256(u8),
+    Rgb(String),
 }
 
 fn serialize_color(c: &ConfigColor) -> String {
@@ -168,6 +173,7 @@ fn serialize_color(c: &ConfigColor) -> String {
         ConfigColor::Cyan => "Cyan".to_string(),
         ConfigColor::White => "White".to_string(),
         ConfigColor::Color256(x) => format!("{}", x),
+        ConfigColor::Rgb(x) => x.to_string(),
     }
 }
 
@@ -190,6 +196,7 @@ fn deserialize_color(s: &str) -> Option<ConfigColor> {
         "Cyan" => Some(ConfigColor::Cyan),
         "White" => Some(ConfigColor::White),
         s if u8::from_str(s).is_ok() => Some(ConfigColor::Color256(u8::from_str(s).unwrap())),
+        s if RGB_PATTERN.is_match(s) => Some(ConfigColor::Rgb(s.to_string())),
         _ => None,
     }
 }

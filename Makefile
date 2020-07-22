@@ -1,38 +1,27 @@
-VERSION = $(patsubst "%",%, $(word 3, $(shell grep version Cargo.toml)))
-BUILD_TIME = $(shell date +"%Y/%m/%d %H:%M:%S")
-GIT_REVISION = $(shell git log -1 --format="%h")
-RUST_VERSION = $(word 2, $(shell rustc -V))
-LONG_VERSION = "$(VERSION) ( rev: $(GIT_REVISION), rustc: $(RUST_VERSION), build at: $(BUILD_TIME) )"
-BIN_NAME = procs
+ifeq ($(RUST_TARGET),)
+	TARGET := ""
+	RELEASE_SUFFIX := ""
+else
+	TARGET := $(RUST_TARGET)
+	RELEASE_SUFFIX := "-$(TARGET)"
+	export CARGO_BUILD_TARGET = $(RUST_TARGET)
+endif
 
-export LONG_VERSION
+VERSION := $(word 3,$(shell grep -m1 "^version" Cargo.toml))
+RELEASE := procs-$(VERSION)$(RELEASE_SUFFIX)
 
-.PHONY: all test clean release_lnx release_win release_mac
+all: release
 
-all: test
+procs:
+	RUSTFLAGS='-C link-args=-s' cargo build --locked --release
 
-test:
-	cargo test --locked
+bin:
+	mkdir -p $@
 
-watch:
-	cargo watch test --locked
+bin/procs: procs bin
+	cp -f target/$(TARGET)/release/procs $@
 
-clean:
-	cargo clean
+release: bin/procs
+	tar -C bin -Jcvf $(RELEASE).tar.xz procs
 
-release_lnx:
-	cargo build --locked --release --target=x86_64-unknown-linux-musl
-	zip -j ${BIN_NAME}-v${VERSION}-x86_64-lnx.zip target/x86_64-unknown-linux-musl/release/${BIN_NAME}
-
-release_win:
-	cargo build --locked --release --target=x86_64-pc-windows-msvc
-	7z a ${BIN_NAME}-v${VERSION}-x86_64-win.zip target/x86_64-pc-windows-msvc/release/${BIN_NAME}.exe
-
-release_mac:
-	cargo build --locked --release --target=x86_64-apple-darwin
-	zip -j ${BIN_NAME}-v${VERSION}-x86_64-mac.zip target/x86_64-apple-darwin/release/${BIN_NAME}
-
-release_rpm:
-	mkdir -p target
-	cargo rpm build
-	cp target/x86_64-unknown-linux-musl/release/rpmbuild/RPMS/x86_64/* ./
+.PHONY: all release

@@ -20,8 +20,10 @@ use clap_complete::Shell;
 use console::Term;
 use std::cmp;
 use std::collections::HashMap;
+use std::env;
 use std::fs;
 use std::io::{stdout, Read};
+use std::path::PathBuf;
 use std::time::Instant;
 use unicode_width::UnicodeWidthStr;
 
@@ -185,6 +187,7 @@ pub struct Opt {
 
 #[cfg_attr(tarpaulin, skip)]
 fn get_config() -> Result<Config, Error> {
+    let env_cfg_path = env::var_os("PROCS_CONFIG_PATH").map(PathBuf::from);
     let dot_cfg_path = directories::BaseDirs::new()
         .map(|base| base.home_dir().join(".procs.toml"))
         .filter(|path| path.exists());
@@ -199,7 +202,7 @@ fn get_config() -> Result<Config, Error> {
                 .join("config.toml")
         })
         .filter(|path| path.exists());
-    let cfg_path = dot_cfg_path.or(app_cfg_path).or(xdg_cfg_path);
+    let cfg_path = env_cfg_path.or(dot_cfg_path).or(app_cfg_path).or(xdg_cfg_path);
 
     let config: Config = if let Some(path) = cfg_path {
         let mut f = fs::File::open(&path).context(format!("failed to open file ({:?})", path))?;

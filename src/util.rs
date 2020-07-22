@@ -18,6 +18,7 @@ pub fn find_partial<T: AsRef<str>>(
     pid: i32,
     keyword: &[T],
     logic: &ConfigSearchLogic,
+    smart_case: bool,
 ) -> bool {
     let mut ret = match logic {
         ConfigSearchLogic::And => true,
@@ -27,8 +28,10 @@ pub fn find_partial<T: AsRef<str>>(
     };
     for w in keyword {
         let mut hit = false;
+        let word = w.as_ref();
+        let ignore_case = smart_case && word.find(char::is_uppercase).is_none();
         for c in columns {
-            if c.find_partial(pid, w.as_ref()) {
+            if c.find_partial(pid, word, ignore_case) {
                 hit = true;
                 break;
             }

@@ -1,10 +1,15 @@
 use crate::column::Column;
 use crate::columns::ConfigColumnKind;
+use core::fmt;
+use once_cell::sync::Lazy;
+use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use std::str::FromStr;
 
+static RGB_PATTERN: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)\A#[0-9A-F]{6}\z").unwrap());
+
 // ---------------------------------------------------------------------------------------------------------------------
-// Functions for serde default
+// Functions for serde defalut
 // ---------------------------------------------------------------------------------------------------------------------
 
 fn default_true() -> bool {
@@ -147,50 +152,59 @@ pub enum ConfigColor {
     Cyan,
     White,
     Color256(u8),
+    Rgb(String),
 }
 
-fn serialize_color(c: &ConfigColor) -> String {
-    match c {
-        ConfigColor::BrightBlack => "BrightBlack".to_string(),
-        ConfigColor::BrightRed => "BrightRed".to_string(),
-        ConfigColor::BrightGreen => "BrightGreen".to_string(),
-        ConfigColor::BrightYellow => "BrightYellow".to_string(),
-        ConfigColor::BrightBlue => "BrightBlue".to_string(),
-        ConfigColor::BrightMagenta => "BrightMagenta".to_string(),
-        ConfigColor::BrightCyan => "BrightCyan".to_string(),
-        ConfigColor::BrightWhite => "BrightWhite".to_string(),
-        ConfigColor::Black => "Black".to_string(),
-        ConfigColor::Red => "Red".to_string(),
-        ConfigColor::Green => "Green".to_string(),
-        ConfigColor::Yellow => "Yellow".to_string(),
-        ConfigColor::Blue => "Blue".to_string(),
-        ConfigColor::Magenta => "Magenta".to_string(),
-        ConfigColor::Cyan => "Cyan".to_string(),
-        ConfigColor::White => "White".to_string(),
-        ConfigColor::Color256(x) => format!("{x}"),
+impl fmt::Display for ConfigColor {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Self::BrightBlack => "BrightBlack",
+            Self::BrightRed => "BrightRed",
+            Self::BrightGreen => "BrightGreen",
+            Self::BrightYellow => "BrightYellow",
+            Self::BrightBlue => "BrightBlue",
+            Self::BrightMagenta => "BrightMagenta",
+            Self::BrightCyan => "BrightCyan",
+            Self::BrightWhite => "BrightWhite",
+            Self::Black => "Black",
+            Self::Red => "Red",
+            Self::Green => "Green",
+            Self::Yellow => "Yellow",
+            Self::Blue => "Blue",
+            Self::Magenta => "Magenta",
+            Self::Cyan => "Cyan",
+            Self::White => "White",
+            Self::Color256(c) => return write!(f, "{c}"),
+            Self::Rgb(rgb) => rgb,
+        })
     }
 }
 
-fn deserialize_color(s: &str) -> Option<ConfigColor> {
-    match s {
-        "BrightBlack" => Some(ConfigColor::BrightBlack),
-        "BrightRed" => Some(ConfigColor::BrightRed),
-        "BrightGreen" => Some(ConfigColor::BrightGreen),
-        "BrightYellow" => Some(ConfigColor::BrightYellow),
-        "BrightBlue" => Some(ConfigColor::BrightBlue),
-        "BrightMagenta" => Some(ConfigColor::BrightMagenta),
-        "BrightCyan" => Some(ConfigColor::BrightCyan),
-        "BrightWhite" => Some(ConfigColor::BrightWhite),
-        "Black" => Some(ConfigColor::Black),
-        "Red" => Some(ConfigColor::Red),
-        "Green" => Some(ConfigColor::Green),
-        "Yellow" => Some(ConfigColor::Yellow),
-        "Blue" => Some(ConfigColor::Blue),
-        "Magenta" => Some(ConfigColor::Magenta),
-        "Cyan" => Some(ConfigColor::Cyan),
-        "White" => Some(ConfigColor::White),
-        s if u8::from_str(s).is_ok() => Some(ConfigColor::Color256(u8::from_str(s).unwrap())),
-        _ => None,
+impl TryFrom<&str> for ConfigColor {
+    type Error = ();
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Ok(match value {
+            "BrightBlack" => Self::BrightBlack,
+            "BrightRed" => Self::BrightRed,
+            "BrightGreen" => Self::BrightGreen,
+            "BrightYellow" => Self::BrightYellow,
+            "BrightBlue" => Self::BrightBlue,
+            "BrightMagenta" => Self::BrightMagenta,
+            "BrightCyan" => Self::BrightCyan,
+            "BrightWhite" => Self::BrightWhite,
+            "Black" => Self::Black,
+            "Red" => Self::Red,
+            "Green" => Self::Green,
+            "Yellow" => Self::Yellow,
+            "Blue" => Self::Blue,
+            "Magenta" => Self::Magenta,
+            "Cyan" => Self::Cyan,
+            "White" => Self::White,
+            s if u8::from_str(s).is_ok() => Self::Color256(u8::from_str(s).unwrap()),
+            s if RGB_PATTERN.is_match(s) => Self::Rgb(s.to_owned()),
+            _ => return Err(()),
+        })
     }
 }
 
@@ -198,10 +212,8 @@ fn serialize_color_by_theme(c: &ConfigColorByTheme) -> String {
     let dark = &c.dark;
     let light = &c.light;
     if dark == light {
-        serialize_color(dark)
+        dark.to_string()
     } else {
-        let dark = serialize_color(dark);
-        let light = serialize_color(light);
         format!("{dark}|{light}")
     }
 }
@@ -210,11 +222,12 @@ fn deserialize_color_by_theme(s: &str) -> Option<ConfigColorByTheme> {
     if let Some(i) = s.find('|') {
         let (dark, light) = s.split_at(i);
         let light = &light[1..];
-        let dark = deserialize_color(dark)?;
-        let light = deserialize_color(light)?;
-        Some(ConfigColorByTheme { dark, light })
+        Some(ConfigColorByTheme {
+            dark: dark.try_into().ok()?,
+            light: light.try_into().ok()?,
+        })
     } else {
-        let c = deserialize_color(s)?;
+        let c: ConfigColor = s.try_into().ok()?;
         Some(ConfigColorByTheme {
             dark: c.clone(),
             light: c,

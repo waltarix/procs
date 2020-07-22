@@ -32,6 +32,7 @@ use unicode_width::UnicodeWidthStr;
 // ---------------------------------------------------------------------------------------------------------------------
 
 fn get_config(opt: &Opt) -> Result<Config, Error> {
+    let env_cfg_path = std::env::var_os("PROCS_CONFIG_PATH").map(PathBuf::from);
     let dot_cfg_path = directories::BaseDirs::new()
         .map(|base| base.home_dir().join(".procs.toml"))
         .filter(|path| path.exists());
@@ -51,6 +52,7 @@ fn get_config(opt: &Opt) -> Result<Config, Error> {
     let cfg_path = opt
         .load_config
         .clone()
+        .or(env_cfg_path)
         .or(dot_cfg_path)
         .or(app_cfg_path)
         .or(xdg_cfg_path)

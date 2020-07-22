@@ -118,7 +118,7 @@ impl Column for Tree {
         }
     }
 
-    fn find_partial(&self, _pid: i32, _keyword: &str) -> bool {
+    fn find_partial(&self, _pid: i32, _keyword: &str, _ignore_case: bool) -> bool {
         false
     }
 

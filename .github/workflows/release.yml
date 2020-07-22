@@ -3,46 +3,52 @@ name: Release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - v*.*.*-custom
+      - v*.*.*-custom-r*
 
 jobs:
   build:
-
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
-        rust: [stable]
+        include:
+          - os: ubuntu-latest
+            rust-target: x86_64-unknown-linux-musl
+          - os: macos-latest
+            rust-target: x86_64-apple-darwin
+          - os: macos-latest
+            rust-target: aarch64-apple-darwin
 
     runs-on: ${{ matrix.os }}
 
     steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set RUST_TARGET
+      run: echo 'RUST_TARGET=${{ matrix.rust-target }}' >> $GITHUB_ENV
+
     - name: Setup Rust
       uses: hecrj/setup-rust-action@v1
       with:
-        rust-version: ${{ matrix.rust }}
-    - name: Checkout
-      uses: actions/checkout@v1
-    - name: Setup MUSL
+        rust-version: stable
+        targets: ${{ matrix.rust-target }}
+
+    - name: Setup musl for Linux
       if: matrix.os == 'ubuntu-latest'
+      run: sudo apt-get -qq install musl-tools
+
+    - name: Set environment variables for Apple Silicon
+      if: matrix.rust-target == 'aarch64-apple-darwin'
       run: |
-        rustup target add x86_64-unknown-linux-musl
-        sudo apt-get -qq install musl-tools
-    - name: Build for linux
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        make release_lnx
-        cargo install --locked cargo-rpm
-        make release_rpm
-    - name: Build for macOS
-      if: matrix.os == 'macOS-latest'
-      run: make release_mac
-    - name: Build for Windows
-      if: matrix.os == 'windows-latest'
-      run: make release_win
+        echo "SDKROOT=$(xcrun -sdk macosx11.0 --show-sdk-path)" >> $GITHUB_ENV
+        echo "MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx11.0 --show-sdk-platform-version)" >> $GITHUB_ENV
+
+    - name: Build
+      run: make release
+
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
-        body: '[Changelog](https://github.com/dalance/procs/blob/master/CHANGELOG.md)'
-        files: "*.zip\n*.rpm"
+        files: '*.tar.xz'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

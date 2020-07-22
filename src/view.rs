@@ -48,16 +48,6 @@ impl View {
             header: None,
         };
 
-        // Adding the sort column to inserts if not already present
-        match (&opt.sorta, &opt.sortd) {
-            (_, Some(col)) | (Some(col), _) => {
-                if !opt.insert.contains(col) {
-                    opt.insert.push(col.clone());
-                }
-            }
-            _ => {}
-        }
-
         // Add default TreeSlot if there is not TreeSlot in config
         let config_columns = if config
             .columns
@@ -489,7 +479,7 @@ impl View {
                     "{} {}",
                     row,
                     apply_color(
-                        c.column.display_header(&c.align, order, config),
+                        &c.column.display_header(&c.align, order, config),
                         &config.style.header,
                         theme,
                         false
@@ -511,7 +501,7 @@ impl View {
                     "{} {}",
                     row,
                     apply_color(
-                        c.column.display_unit(&c.align),
+                        &c.column.display_unit(&c.align),
                         &config.style.unit,
                         theme,
                         false
@@ -539,7 +529,7 @@ impl View {
                     "{} {}",
                     row,
                     apply_style(
-                        c.column.display_content(pid, &c.align).unwrap(),
+                        &c.column.display_content(pid, &c.align).unwrap(),
                         &c.style,
                         &config.style,
                         theme,

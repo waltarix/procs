@@ -52,6 +52,8 @@ termbg        = "0.5.0"
 tokio         = { version = "1.36", optional = true, features = ["rt"] }
 toml          = "0.8"
 unicode-width = "0.1"
+ansi_term     = "0.12.1"
+regex         = "1.10"
 
 [target.'cfg(any(target_os = "linux", target_os = "android"))'.dependencies]
 pager         = "0.16.1"
@@ -88,3 +90,8 @@ procs = { path = "/usr/bin/procs" }
 [profile.release]
 lto = true
 codegen-units = 1
+opt-level = 3
+strip = true
+
+[patch.crates-io]
+unicode-width = { git = "https://github.com/waltarix/unicode-width", tag = "v0.1.13-custom" }

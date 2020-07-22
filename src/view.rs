@@ -401,12 +401,12 @@ impl View {
     ) -> bool {
         let ret_nonnumeric = match config.search.nonnumeric_search {
             ConfigSearchKind::Partial => {
-                find_partial(cols_nonnumeric, pid, keyword_nonnumeric, logic)
+                find_partial(cols_nonnumeric, pid, keyword_nonnumeric, logic, config.search.smart_case)
             }
             ConfigSearchKind::Exact => find_exact(cols_nonnumeric, pid, keyword_nonnumeric, logic),
         };
         let ret_numeric = match config.search.numeric_search {
-            ConfigSearchKind::Partial => find_partial(cols_numeric, pid, keyword_numeric, logic),
+            ConfigSearchKind::Partial => find_partial(cols_numeric, pid, keyword_numeric, logic, false),
             ConfigSearchKind::Exact => find_exact(cols_numeric, pid, keyword_numeric, logic),
         };
         match logic {

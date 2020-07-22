@@ -1,38 +1,41 @@
-VERSION = $(patsubst "%",%, $(word 3, $(shell grep version Cargo.toml)))
-BUILD_TIME = $(shell date +"%Y/%m/%d %H:%M:%S")
-GIT_REVISION = $(shell git log -1 --format="%h")
-RUST_VERSION = $(word 2, $(shell rustc -V))
-LONG_VERSION = "$(VERSION) ( rev: $(GIT_REVISION), rustc: $(RUST_VERSION), build at: $(BUILD_TIME) )"
-BIN_NAME = procs
+ifeq ($(RUST_TARGET),)
+	TARGET :=
+	RELEASE_SUFFIX :=
+else
+	TARGET := $(RUST_TARGET)
+	RELEASE_SUFFIX := -$(TARGET)
+	export CARGO_BUILD_TARGET = $(RUST_TARGET)
+endif
 
-export LONG_VERSION
+PROJECT_NAME := procs
 
-.PHONY: all test clean release_lnx release_win release_mac
+VERSION := $(subst $\",,$(word 3,$(shell grep -m1 "^version" Cargo.toml)))
+RELEASE := $(PROJECT_NAME)-$(VERSION)$(RELEASE_SUFFIX)
 
-all: test
+DIST_DIR := dist
+RELEASE_DIR := $(DIST_DIR)/$(RELEASE)
 
-test:
-	cargo test --locked
+BINARY := target/$(TARGET)/release/$(PROJECT_NAME)
 
-watch:
-	cargo watch test --locked
+RELEASE_BINARY := $(RELEASE_DIR)/$(PROJECT_NAME)
 
+ARTIFACT := $(RELEASE).tar.xz
+
+.PHONY: all
+all: $(ARTIFACT)
+
+$(BINARY):
+	RUSTFLAGS='-C link-args=-s' cargo build --locked --release
+
+$(DIST_DIR) $(RELEASE_DIR):
+	mkdir -p $@
+
+$(RELEASE_BINARY): $(BINARY) $(RELEASE_DIR)
+	cp -f $< $@
+
+$(ARTIFACT): $(RELEASE_BINARY)
+	tar -C $(DIST_DIR) -Jcvf $@ $(RELEASE)
+
+.PHONY: clean
 clean:
-	cargo clean
-
-release_lnx:
-	cargo build --locked --release --target=x86_64-unknown-linux-musl
-	zip -j ${BIN_NAME}-v${VERSION}-x86_64-linux.zip target/x86_64-unknown-linux-musl/release/${BIN_NAME}
-
-release_win:
-	cargo build --locked --release --target=x86_64-pc-windows-msvc
-	7z a ${BIN_NAME}-v${VERSION}-x86_64-windows.zip target/x86_64-pc-windows-msvc/release/${BIN_NAME}.exe
-
-release_mac:
-	cargo build --locked --release --target=x86_64-apple-darwin
-	zip -j ${BIN_NAME}-v${VERSION}-x86_64-mac.zip target/x86_64-apple-darwin/release/${BIN_NAME}
-
-release_rpm:
-	mkdir -p target
-	cargo rpm build
-	cp target/x86_64-unknown-linux-musl/release/rpmbuild/RPMS/x86_64/* ./
+	$(RM) -r $(ARTIFACT) $(DIST_DIR)

@@ -52,6 +52,8 @@ serde_derive  = "1.0"
 termbg        = "0.4.1"
 toml          = "0.5"
 unicode-width = "0.1"
+ansi_term     = "0.12.1"
+regex         = "1.5.4"
 
 [target.'cfg(any(target_os = "linux", target_os = "android"))'.dependencies]
 pager         = "0.16"
@@ -77,5 +79,10 @@ target = "x86_64-unknown-linux-musl"
 procs = { path = "/usr/bin/procs" }
 
 [profile.release]
+strip = true
+opt-level = 2
 lto = true
 codegen-units = 1
+
+[patch.crates-io]
+unicode-width = { git = "https://github.com/waltarix/unicode-width", tag = "v0.1.9-custom-r2" }

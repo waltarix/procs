@@ -15,7 +15,7 @@ use crate::util::{adjust, get_theme, lap, ArgColorMode, ArgPagerMode, ArgThemeMo
 use crate::view::View;
 use crate::watcher::Watcher;
 use anyhow::{anyhow, Context, Error};
-use clap::{ArgEnum, IntoApp, Parser};
+use clap::{CommandFactory, Parser, ValueEnum};
 use clap_complete::Shell;
 use console::Term;
 use std::cmp;
@@ -30,26 +30,26 @@ use unicode_width::UnicodeWidthStr;
 // Opt
 // ---------------------------------------------------------------------------------------------------------------------
 
-#[derive(Clone, Debug, ArgEnum)]
+#[derive(Clone, Debug, ValueEnum)]
 pub enum BuiltinConfig {
     Default,
     Large,
 }
 
 #[derive(Debug, Parser)]
-#[clap(long_version(option_env!("LONG_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"))))]
-#[clap(setting(clap::AppSettings::DeriveDisplayOrder))]
+#[command(
+    long_version = option_env!("LONG_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"))
+)]
 /// A modern replacement for ps
 ///
 /// please see https://github.com/dalance/procs#configuration to configure columns
 pub struct Opt {
     /// Keywords for search
-    #[clap(action, name = "KEYWORD")]
+    #[arg(name = "KEYWORD")]
     pub keyword: Vec<String>,
 
     /// AND  logic for multi-keyword
-    #[clap(
-        action,
+    #[arg(
         short = 'a',
         long = "and",
         conflicts_with_all(&["or", "nand", "nor"])
@@ -57,8 +57,7 @@ pub struct Opt {
     pub and: bool,
 
     /// OR   logic for multi-keyword
-    #[clap(
-        action,
+    #[arg(
         short = 'o',
         long = "or",
         conflicts_with_all(&["and", "nand", "nor"])
@@ -66,8 +65,7 @@ pub struct Opt {
     pub or: bool,
 
     /// NAND logic for multi-keyword
-    #[clap(
-        action,
+    #[arg(
         short = 'd',
         long = "nand",
         conflicts_with_all(&["and", "or", "nor"])
@@ -75,8 +73,7 @@ pub struct Opt {
     pub nand: bool,
 
     /// NOR  logic for multi-keyword
-    #[clap(
-        action,
+    #[arg(
         short = 'r',
         long = "nor",
         conflicts_with_all(&["and", "or", "nand"])
@@ -84,45 +81,38 @@ pub struct Opt {
     pub nor: bool,
 
     /// Show list of kind
-    #[clap(action, short = 'l', long = "list")]
+    #[arg(short = 'l', long = "list")]
     pub list: bool,
 
     /// Show thread
-    #[clap(action, long = "thread")]
+    #[arg(long = "thread")]
     pub thread: bool,
 
     /// Tree view
-    #[clap(action, short = 't', long = "tree")]
+    #[arg(short = 't', long = "tree")]
     pub tree: bool,
 
     /// Watch mode with default interval (1s)
-    #[clap(action, short = 'w', long = "watch")]
+    #[arg(short = 'w', long = "watch")]
     pub watch: bool,
 
     /// Watch mode with custom interval
-    #[clap(action, short = 'W', long = "watch-interval", value_name = "second")]
+    #[arg(short = 'W', long = "watch-interval", value_name = "second")]
     pub watch_interval: Option<f64>,
 
-    #[clap(skip)]
+    #[arg(skip)]
     pub watch_mode: bool,
 
     /// Insert column to slot
-    #[clap(
-        action,
-        value_name = "kind",
-        short = 'i',
-        long = "insert",
-        number_of_values(1)
-    )]
+    #[arg(value_name = "kind", short = 'i', long = "insert", number_of_values(1))]
     pub insert: Vec<String>,
 
     /// Specified column only
-    #[clap(action, value_name = "kind", long = "only")]
+    #[arg(value_name = "kind", long = "only")]
     pub only: Option<String>,
 
     /// Sort column by ascending
-    #[clap(
-        action,
+    #[arg(
         value_name = "kind",
         long = "sorta",
         conflicts_with_all(&["sortd", "tree"])
@@ -130,8 +120,7 @@ pub struct Opt {
     pub sorta: Option<String>,
 
     /// Sort column by descending
-    #[clap(
-        action,
+    #[arg(
         value_name = "kind",
         long = "sortd",
         conflicts_with_all(&["sorta", "tree"])
@@ -139,52 +128,47 @@ pub struct Opt {
     pub sortd: Option<String>,
 
     /// Color mode
-    #[clap(action, short = 'c', long = "color")]
+    #[arg(short = 'c', long = "color")]
     pub color: Option<ArgColorMode>,
 
     /// Theme mode
-    #[clap(action, long = "theme")]
+    #[arg(long = "theme")]
     pub theme: Option<ArgThemeMode>,
 
     /// Pager mode
-    #[clap(action, short = 'p', long = "pager")]
+    #[arg(short = 'p', long = "pager")]
     pub pager: Option<ArgPagerMode>,
 
     /// Interval to calculate throughput
-    #[clap(
-        action,
-        long = "interval",
-        default_value = "100",
-        value_name = "millisec"
-    )]
+    #[arg(long = "interval", default_value = "100", value_name = "millisec")]
     pub interval: u64,
 
     /// Use built-in configuration
-    #[clap(action, long = "use-config", value_name = "name")]
+    #[arg(long = "use-config", value_name = "name")]
     pub use_config: Option<BuiltinConfig>,
 
     /// Load configuration from file
-    #[clap(action, long = "load-config", value_name = "path")]
+    #[arg(long = "load-config", value_name = "path")]
     pub load_config: Option<PathBuf>,
 
     /// Generate configuration sample file
-    #[clap(action, long = "gen-config")]
+    #[arg(long = "gen-config")]
     pub gen_config: bool,
 
     /// Generate shell completion file
-    #[clap(action, long = "gen-completion", value_name = "shell")]
+    #[arg(long = "gen-completion", value_name = "shell")]
     pub gen_completion: Option<Shell>,
 
     /// Generate shell completion file and write to stdout
-    #[clap(action, long = "gen-completion-out", value_name = "shell")]
+    #[arg(long = "gen-completion-out", value_name = "shell")]
     pub gen_completion_out: Option<Shell>,
 
     /// Suppress header
-    #[clap(action, long = "no-header")]
+    #[arg(long = "no-header")]
     pub no_header: bool,
 
     /// Show debug message
-    #[clap(action, long = "debug", hide = true)]
+    #[arg(long = "debug", hide = true)]
     pub debug: bool,
 }
 
@@ -194,6 +178,7 @@ pub struct Opt {
 
 #[cfg_attr(tarpaulin, skip)]
 fn get_config(opt: &Opt) -> Result<Config, Error> {
+    let env_cfg_path = std::env::var_os("PROCS_CONFIG_PATH").map(PathBuf::from);
     let dot_cfg_path = directories::BaseDirs::new()
         .map(|base| base.home_dir().join(".procs.toml"))
         .filter(|path| path.exists());
@@ -213,6 +198,7 @@ fn get_config(opt: &Opt) -> Result<Config, Error> {
     let cfg_path = opt
         .load_config
         .clone()
+        .or(env_cfg_path)
         .or(dot_cfg_path)
         .or(app_cfg_path)
         .or(xdg_cfg_path)
